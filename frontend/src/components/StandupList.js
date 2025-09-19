@@ -1,6 +1,71 @@
-import React from 'react';
+import React, { useState } from 'react';
+
+const API_URL = 'http://localhost:3001/api';
 
 const StandupList = ({ standups, loading }) => {
+  const [actionLoading, setActionLoading] = useState({});
+
+  const handleNudge = async (standup) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [`nudge-${standup.id}`]: true }));
+      
+      const response = await fetch(`${API_URL}/standups/nudge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          standupId: standup.id,
+          recipientName: standup.name
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert(`✅ ${result.message}`);
+      } else {
+        alert(`❌ Failed to send nudge: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error sending nudge:', error);
+      alert('❌ Failed to send nudge');
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`nudge-${standup.id}`]: false }));
+    }
+  };
+
+  const handleMeet = async (standup) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [`meet-${standup.id}`]: true }));
+      
+      const response = await fetch(`${API_URL}/standups/meet`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          standupId: standup.id,
+          participants: [standup.name, 'Team Lead'],
+          blockerDescription: standup.blockers
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert(`✅ ${result.message}\n🔗 Meeting Link: ${result.meetingLink}\n📝 Agenda: ${result.agenda}`);
+      } else {
+        alert(`❌ Failed to create meeting: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error creating meeting:', error);
+      alert('❌ Failed to create meeting');
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`meet-${standup.id}`]: false }));
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
@@ -72,9 +137,47 @@ const StandupList = ({ standups, loading }) => {
                 </div>
                 
                 {standup.blockers && standup.blockers.trim() && (
-                  <div>
-                    <p className="text-sm font-medium text-red-700 mb-1">Blockers:</p>
-                    <p className="text-sm text-red-600 bg-red-50 rounded p-2">{standup.blockers}</p>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-red-700 mb-2">🚫 Blockers:</p>
+                    <p className="text-sm text-red-600 mb-3">{standup.blockers}</p>
+                    
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleNudge(standup)}
+                        disabled={actionLoading[`nudge-${standup.id}`]}
+                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-3 py-1 rounded text-xs font-medium transition-colors flex items-center"
+                      >
+                        {actionLoading[`nudge-${standup.id}`] ? (
+                          <span className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Sending...
+                          </span>
+                        ) : (
+                          <>💬 Nudge</>
+                        )}
+                      </button>
+                      
+                      <button
+                        onClick={() => handleMeet(standup)}
+                        disabled={actionLoading[`meet-${standup.id}`]}
+                        className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-3 py-1 rounded text-xs font-medium transition-colors flex items-center"
+                      >
+                        {actionLoading[`meet-${standup.id}`] ? (
+                          <span className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 012h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Creating...
+                          </span>
+                        ) : (
+                          <>📅 Meet</>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
