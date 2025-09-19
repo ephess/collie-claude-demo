@@ -190,4 +190,88 @@ router.post('/', async (req, res) => {
   }
 });
 
+// GET all active blockers
+router.get('/blockers', async (req, res) => {
+  try {
+    const db = getDb();
+    
+    const blockers = await new Promise((resolve, reject) => {
+      db.all(
+        `SELECT s.*, u.name, u.role, u.avatar_url 
+         FROM standups s 
+         JOIN users u ON s.user_id = u.id 
+         WHERE s.blockers IS NOT NULL AND s.blockers != '' 
+         ORDER BY s.date DESC, s.created_at DESC`,
+        [],
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        }
+      );
+    });
+    
+    res.json(blockers);
+  } catch (error) {
+    console.error('Error fetching blockers:', error);
+    res.status(500).json({ error: 'Failed to fetch blockers' });
+  }
+});
+
+// POST nudge action (stubbed for Phase 1)
+router.post('/nudge', async (req, res) => {
+  try {
+    const { standupId, recipientName } = req.body;
+    
+    if (!standupId || !recipientName) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: standupId, recipientName' 
+      });
+    }
+    
+    // Stubbed Slack integration - will be replaced in Phase 2
+    console.log(`[STUB] Sending Slack nudge for standup ${standupId} to ${recipientName}`);
+    
+    res.json({ 
+      success: true, 
+      message: `Nudge sent to ${recipientName}`,
+      type: 'slack',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error sending nudge:', error);
+    res.status(500).json({ error: 'Failed to send nudge' });
+  }
+});
+
+// POST meet action (stubbed for Phase 1)
+router.post('/meet', async (req, res) => {
+  try {
+    const { standupId, participants, blockerDescription } = req.body;
+    
+    if (!standupId || !participants || !blockerDescription) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: standupId, participants, blockerDescription' 
+      });
+    }
+    
+    // Stubbed Google Meet integration - will be replaced in Phase 2
+    console.log(`[STUB] Creating Google Meet for standup ${standupId} with participants:`, participants);
+    
+    const meetingId = `stub-meeting-${Date.now()}`;
+    
+    res.json({ 
+      success: true, 
+      message: 'Meeting scheduled successfully',
+      meetingLink: `https://meet.google.com/stub-${meetingId}`,
+      participants: participants,
+      agenda: `Blocker Resolution: ${blockerDescription}`,
+      type: 'google-meet',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error creating meeting:', error);
+    res.status(500).json({ error: 'Failed to create meeting' });
+  }
+});
+
 module.exports = router;

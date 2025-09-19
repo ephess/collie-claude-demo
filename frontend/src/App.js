@@ -3,6 +3,7 @@ import StandupEntry from './components/StandupEntry';
 import StandupList from './components/StandupList';
 import WeekView from './components/WeekView';
 import TeamMember from './components/TeamMember';
+import BlockersList from './components/BlockersList';
 
 const API_URL = 'http://localhost:3001/api';
 
@@ -132,6 +133,16 @@ function App() {
             >
               Team Members
             </button>
+            <button
+              onClick={() => setActiveTab('blockers')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'blockers'
+                  ? 'border-red-500 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              🚫 Blockers
+            </button>
           </nav>
         </div>
       </div>
@@ -209,6 +220,10 @@ function App() {
               />
             ))}
           </div>
+        )}
+
+        {activeTab === 'blockers' && (
+          <BlockersList />
         )}
       </main>
 
